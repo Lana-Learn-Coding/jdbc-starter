@@ -71,8 +71,12 @@ public class CategoryRepo {
     }
 
     public Long getLatestId() {
-        String sql = "SELECT count(*) FROM category";
-        return QueryResult.of(executeQuery(sql), Long.class).firstResult();
+        Long count = QueryResult.of(executeQuery("SELECT count(*) FROM category"), Long.class).firstResult();
+        if (count == 0) {
+            return 0L;
+        }
+        return (long) ((int) QueryResult.of(executeQuery("SELECT id FROM category ORDER BY id DESC"), Integer.class)
+            .firstResult());
     }
 
     private ResultSet executeQuery(String sql) {
