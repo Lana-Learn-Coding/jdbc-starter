@@ -1,6 +1,7 @@
 package io.lana.sqlstarter.repo;
 
 import io.lana.sqlstarter.model.Category;
+import org.postgresql.util.PSQLException;
 
 import java.beans.FeatureDescriptor;
 import java.beans.IntrospectionException;
@@ -27,7 +28,8 @@ public class CategoryRepo {
     }
 
     public List<Category> findByName(String name) {
-        String sql = "SELECT * from category where name like %?%";
+        name = "%" + name + "%";
+        String sql = "SELECT * from category where name like ?";
         QueryResult<Category> result = QueryResult.of(executeQuery(sql, name), Category.class);
         return result.list();
     }
@@ -41,19 +43,19 @@ public class CategoryRepo {
     public void save(Category category) {
         List<Object> fieldValues = this.getFieldsValue(category);
         String sql = "INSERT INTO category VALUES (?, ?, ?, ?)";
-        executeQuery(sql, fieldValues.toArray());
+        executeUpdate(sql, fieldValues.toArray());
     }
 
     public void update(Category category) {
         List<Object> fieldValues = this.getFieldsValue(category);
         fieldValues.add(category.getId());
         String sql = "UPDATE category SET " + this.getColumnsUpdateMapping(Category.class) + " WHERE id=?";
-        executeQuery(sql, fieldValues.toArray());
+        executeUpdate(sql, fieldValues.toArray());
     }
 
     public void delete(Integer id) {
         String sql = "DELETE FROM category WHERE id = ?";
-        executeQuery(sql, id);
+        executeUpdate(sql, id);
     }
 
     public boolean existByName(String name) {
@@ -93,6 +95,18 @@ public class CategoryRepo {
         }
     }
 
+    private int executeUpdate(String sql, Object... params) {
+        try {
+            PreparedStatement statement = connection.prepareStatement(sql);
+            for (int i = 0; i < params.length; i++) {
+                statement.setObject(i + 1, params[i]);
+            }
+            return statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private List<Object> getFieldsValue(Object object) {
         Class<?> clazz = object.getClass();
         try {
@@ -109,10 +123,10 @@ public class CategoryRepo {
     public String getColumnsUpdateMapping(Class<?> clazz) {
         try {
             return Arrays.stream(Introspector.getBeanInfo(clazz).getPropertyDescriptors())
-                    .map(FeatureDescriptor::getName)
-                    .map(CaseUtils::toSnakeCase)
-                    .map(name -> name + "=?")
-                    .collect(Collectors.joining(","));
+                .map(FeatureDescriptor::getName)
+                .map(CaseUtils::toSnakeCase)
+                .map(name -> name + "=?")
+                .collect(Collectors.joining(","));
         } catch (IntrospectionException e) {
             throw new RuntimeException("Cannot get fields of type: " + clazz.getName());
         }
