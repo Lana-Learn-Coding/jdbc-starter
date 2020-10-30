@@ -26,7 +26,7 @@ public class ValidationUtils {
         try {
             return Integer.parseInt(input);
         } catch (Exception e) {
-            System.out.println("Bad integer format");
+            System.out.println("Bad integer format, enter again:");
             return enforceInteger(sc, nullable);
         }
     }
