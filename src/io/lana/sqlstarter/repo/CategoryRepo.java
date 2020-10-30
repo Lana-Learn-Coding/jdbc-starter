@@ -126,7 +126,7 @@ public class CategoryRepo {
 
     public String getColumnsUpdateMapping(Class<?> clazz) {
         try {
-            return Arrays.stream(Introspector.getBeanInfo(clazz).getPropertyDescriptors())
+            return Arrays.stream(Introspector.getBeanInfo(clazz, Object.class).getPropertyDescriptors())
                 .map(FeatureDescriptor::getName)
                 .map(CaseUtils::toSnakeCase)
                 .map(name -> name + "=?")
