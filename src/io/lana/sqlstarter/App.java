@@ -24,7 +24,9 @@ public class App {
             Menu menu = new Menu(sc, "Category Menu");
             menu.addCommand(Command.of("1", "Show all category", () -> showAllCategory(categoryRepo)));
             menu.addCommand(Command.of("2", "Show category by name", () -> showAllCategoryByName(categoryRepo)));
-            menu.addCommand(Command.of("3", "Create new category ", () -> createNewCategory(categoryRepo)));
+            menu.addCommand(Command.of("3", "Create new category", () -> createNewCategory(categoryRepo)));
+            menu.addCommand(Command.of("4", "Delete category", () -> deleteCategory(categoryRepo)));
+            menu.addCommand(Command.of("5", "Update existing category", () -> updateCategory(categoryRepo)));
             menu.addCommand(Command.of("6", "Exit", menu::stop));
 
             menu.run(true);
@@ -70,6 +72,49 @@ public class App {
             return;
         }
 
+    }
+
+    private static void deleteCategory(CategoryRepo categoryRepo) {
+        System.out.println("Enter id to delete");
+        Integer id = ValidationUtils.enforceInteger(sc);
+        if (categoryRepo.exist(id)) {
+            categoryRepo.delete(id);
+            System.out.println("ok");
+            return;
+        }
+        System.out.println("Not found");
+    }
+
+    private static void updateCategory(CategoryRepo categoryRepo) {
+        System.out.println("Enter id to update");
+        Integer id = ValidationUtils.enforceInteger(sc);
+        if (!categoryRepo.exist(id)) {
+            System.out.println("Not found");
+        }
+        while (true) {
+            Category category = new Category();
+            System.out.println("Enter category name");
+            category.setName(ValidationUtils.enforceNotEmpty(sc));
+            System.out.println("Enter parent id");
+            category.setParentId(ValidationUtils.enforceInteger(sc));
+            System.out.println("Enter status");
+            category.setStatus(ValidationUtils.enforceBoolean(sc));
+
+            if (category.getParentId() != 0 && !categoryRepo.exist(category.getParentId())) {
+                System.out.println("parent id not exist, try again");
+                continue;
+            }
+
+            if (categoryRepo.existByName(category.getName())) {
+                System.out.println("name already picked, try again");
+                continue;
+            }
+
+            if (category.getParentId() == 0) category.setParentId(null);
+            category.setId(id);
+            categoryRepo.update(category);
+            return;
+        }
     }
 
     private static void printAll(List<Category> categories) {
