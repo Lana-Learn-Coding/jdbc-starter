@@ -1,4 +1,4 @@
-package io.lana.sqlstarter.menu;
+package io.lana.sqlstarter.utils;
 
 import java.util.Scanner;
 import java.util.function.Function;

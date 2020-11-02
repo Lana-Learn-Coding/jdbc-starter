@@ -1,5 +1,7 @@
 package io.lana.sqlstarter.repo;
 
+import io.lana.sqlstarter.utils.CaseUtils;
+
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;

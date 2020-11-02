@@ -2,10 +2,10 @@ package io.lana.sqlstarter;
 
 import io.lana.sqlstarter.menu.Command;
 import io.lana.sqlstarter.menu.Menu;
-import io.lana.sqlstarter.menu.ValidationUtils;
+import io.lana.sqlstarter.repo.conn.PostgresConnection;
+import io.lana.sqlstarter.utils.ValidationUtils;
 import io.lana.sqlstarter.model.Category;
 import io.lana.sqlstarter.repo.CategoryDAO;
-import io.lana.sqlstarter.repo.ConnectionUtils;
 
 import java.sql.Connection;
 import java.util.List;
@@ -17,7 +17,7 @@ public class App {
     private static long seq = 1;
 
     public static void main(String[] args) {
-        try (Connection connection = ConnectionUtils.getConnection()) {
+        try (Connection connection = PostgresConnection.INSTANCE.getConnection()) {
             CategoryDAO categoryDAO = new CategoryDAO(connection);
             seq = categoryDAO.getLatestId() + 1;
 

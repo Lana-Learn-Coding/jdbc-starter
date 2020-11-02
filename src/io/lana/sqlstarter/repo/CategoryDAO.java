@@ -1,6 +1,7 @@
 package io.lana.sqlstarter.repo;
 
 import io.lana.sqlstarter.model.Category;
+import io.lana.sqlstarter.utils.CaseUtils;
 
 import java.beans.FeatureDescriptor;
 import java.beans.IntrospectionException;

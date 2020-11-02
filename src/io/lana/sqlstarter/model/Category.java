@@ -1,9 +1,5 @@
 package io.lana.sqlstarter.model;
 
-import io.lana.sqlstarter.menu.ValidationUtils;
-
-import java.util.Scanner;
-
 public class Category {
     private Integer id;
 
