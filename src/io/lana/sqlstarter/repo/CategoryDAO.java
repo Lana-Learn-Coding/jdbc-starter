@@ -1,7 +1,6 @@
 package io.lana.sqlstarter.repo;
 
 import io.lana.sqlstarter.model.Category;
-import org.postgresql.util.PSQLException;
 
 import java.beans.FeatureDescriptor;
 import java.beans.IntrospectionException;
@@ -14,10 +13,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class CategoryRepo {
+public class CategoryDAO {
     private final Connection connection;
 
-    public CategoryRepo(Connection connection) {
+    public CategoryDAO(Connection connection) {
         this.connection = connection;
     }
 
