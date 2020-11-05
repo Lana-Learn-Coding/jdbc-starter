@@ -9,9 +9,15 @@ import io.lana.sqlstarter.repo.CategoryDAO;
 
 import java.sql.Connection;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Scanner;
 
 public class App {
+    private static final String LOCALE_PATH = "io.lana.sqlstarter.locale.Menu";
+
+    private static ResourceBundle menuLang = ResourceBundle.getBundle(LOCALE_PATH, new Locale("en", "US"));
+
     private static final Scanner sc = new Scanner(System.in);
 
     private static long seq = 1;
@@ -21,13 +27,14 @@ public class App {
             CategoryDAO categoryDAO = new CategoryDAO(connection);
             seq = categoryDAO.getLatestId() + 1;
 
-            Menu menu = new Menu(sc, "Category Menu");
-            menu.addCommand(Command.of("1", "Show all category", () -> showAllCategory(categoryDAO)));
-            menu.addCommand(Command.of("2", "Show category by name", () -> showAllCategoryByName(categoryDAO)));
-            menu.addCommand(Command.of("3", "Create new category", () -> createNewCategory(categoryDAO)));
-            menu.addCommand(Command.of("4", "Delete category", () -> deleteCategory(categoryDAO)));
-            menu.addCommand(Command.of("5", "Update existing category", () -> updateCategory(categoryDAO)));
-            menu.addCommand(Command.of("6", "Exit", menu::stop));
+            Menu menu = new Menu(sc, menuLang.getString("menu.title"));
+            menu.addCommand(Command.of("1", menuLang.getString("menu.1"), () -> showAllCategory(categoryDAO)));
+            menu.addCommand(Command.of("2", menuLang.getString("menu.2"), () -> showAllCategoryByName(categoryDAO)));
+            menu.addCommand(Command.of("3", menuLang.getString("menu.3"), () -> createNewCategory(categoryDAO)));
+            menu.addCommand(Command.of("4", menuLang.getString("menu.4"), () -> deleteCategory(categoryDAO)));
+            menu.addCommand(Command.of("5", menuLang.getString("menu.5"), () -> updateCategory(categoryDAO)));
+            menu.addCommand(Command.of("6", menuLang.getString("menu.6"), () -> changeLanguage(menu)));
+            menu.addCommand(Command.of("7", menuLang.getString("menu.7"), menu::stop));
 
             menu.run(true);
         } catch (Exception e) {
@@ -35,86 +42,92 @@ public class App {
         }
     }
 
-    public static void showAllCategory(CategoryDAO repo) {
+    private static void showAllCategory(CategoryDAO repo) {
         printAll(repo.findAll());
     }
 
-    public static void showAllCategoryByName(CategoryDAO repo) {
-        System.out.println("Enter name: ");
+    private static void showAllCategoryByName(CategoryDAO repo) {
+        System.out.println(menuLang.getString("app.op.query.name-to-find"));
         String name = ValidationUtils.enforceNotEmpty(sc);
         printAll(repo.findByName(name));
     }
 
-    public static void createNewCategory(CategoryDAO repo) {
+    private static void createNewCategory(CategoryDAO dao) {
+        Category category = inputCategory(dao);
+        category.setId((int) seq);
+        dao.save(category);
+        seq++;
+    }
+
+    private static void updateCategory(CategoryDAO dao) {
+        System.out.println(menuLang.getString("app.op.query.id-to-update"));
+        Integer id = ValidationUtils.enforceInteger(sc);
+        if (!dao.exist(id)) {
+            System.out.println(menuLang.getString("category.input.error.not-found"));
+        }
+        Category category = inputCategory(dao);
+        category.setId(id);
+        dao.update(category);
+    }
+
+    private static Category inputCategory(CategoryDAO dao) {
         while (true) {
             Category category = new Category();
-            System.out.println("Enter category name");
+            System.out.println(menuLang.getString("category.input.name"));
             category.setName(ValidationUtils.enforceNotEmpty(sc));
-            System.out.println("Enter parent id");
+            System.out.println(menuLang.getString("category.input.parent-id"));
             category.setParentId(ValidationUtils.enforceInteger(sc));
-            System.out.println("Enter status");
+            System.out.println(menuLang.getString("category.input.status"));
             category.setStatus(ValidationUtils.enforceBoolean(sc));
 
-            if (category.getParentId() != 0 && !repo.exist(category.getParentId())) {
-                System.out.println("parent id not exist, try again");
+            if (category.getParentId() != 0 && !dao.exist(category.getParentId())) {
+                System.out.println(menuLang.getString("category.input.error.parent-id-not-found"));
                 continue;
             }
 
-            if (repo.existByName(category.getName())) {
-                System.out.println("name already picked, try again");
+            if (dao.existByName(category.getName())) {
+                System.out.println(menuLang.getString("category.input.error.name-duplicated"));
                 continue;
             }
 
             if (category.getParentId() == 0) category.setParentId(null);
-            category.setId((int) seq);
-            repo.save(category);
-            seq++;
-            return;
+            return category;
         }
-
     }
 
     private static void deleteCategory(CategoryDAO categoryDAO) {
-        System.out.println("Enter id to delete");
+        System.out.println(menuLang.getString("app.op.query.id-to-delete"));
         Integer id = ValidationUtils.enforceInteger(sc);
         if (categoryDAO.exist(id)) {
             categoryDAO.delete(id);
-            System.out.println("ok");
+            System.out.println(menuLang.getString("app.op.ok"));
             return;
         }
-        System.out.println("Not found");
+        System.out.println(menuLang.getString("category.input.error.not-found"));
     }
 
-    private static void updateCategory(CategoryDAO categoryDAO) {
-        System.out.println("Enter id to update");
-        Integer id = ValidationUtils.enforceInteger(sc);
-        if (!categoryDAO.exist(id)) {
-            System.out.println("Not found");
+    private static void changeLanguage(Menu menu) {
+        System.out.println(menuLang.getString("app.conf.input.lang"));
+        String lang = ValidationUtils.enforceInput(sc, (input) ->
+                input.equals("en") || input.equals("vi")
+                        ? null
+                        : menuLang.getString("app.conf.error.language-not-found")
+        );
+
+        if (lang.equals("vi")) {
+            menuLang = ResourceBundle.getBundle(LOCALE_PATH, new Locale("vi", "VN"));
+        } else {
+            menuLang = ResourceBundle.getBundle(LOCALE_PATH, new Locale("en", "US"));
         }
-        while (true) {
-            Category category = new Category();
-            System.out.println("Enter category name");
-            category.setName(ValidationUtils.enforceNotEmpty(sc));
-            System.out.println("Enter parent id");
-            category.setParentId(ValidationUtils.enforceInteger(sc));
-            System.out.println("Enter status");
-            category.setStatus(ValidationUtils.enforceBoolean(sc));
 
-            if (category.getParentId() != 0 && !categoryDAO.exist(category.getParentId())) {
-                System.out.println("parent id not exist, try again");
-                continue;
-            }
-
-            if (categoryDAO.existByName(category.getName())) {
-                System.out.println("name already picked, try again");
-                continue;
-            }
-
-            if (category.getParentId() == 0) category.setParentId(null);
-            category.setId(id);
-            categoryDAO.update(category);
-            return;
-        }
+        menu.setTitle(menuLang.getString("menu.title"));
+        menu.getCommand("1").setDescription(menuLang.getString("menu.1"));
+        menu.getCommand("2").setDescription(menuLang.getString("menu.2"));
+        menu.getCommand("3").setDescription(menuLang.getString("menu.3"));
+        menu.getCommand("4").setDescription(menuLang.getString("menu.4"));
+        menu.getCommand("5").setDescription(menuLang.getString("menu.5"));
+        menu.getCommand("6").setDescription(menuLang.getString("menu.6"));
+        menu.getCommand("7").setDescription(menuLang.getString("menu.7"));
     }
 
     private static void printAll(List<Category> categories) {

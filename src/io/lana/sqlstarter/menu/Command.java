@@ -5,7 +5,7 @@ public class Command implements MenuCommand {
 
     private final String activator;
 
-    private final String description;
+    private String description;
 
     private Command(String activator, String description, MenuCommandExecutor executor) {
         this.executor = executor;
@@ -30,6 +30,11 @@ public class Command implements MenuCommand {
     @Override
     public String getDescription() {
         return this.description;
+    }
+
+    @Override
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @Override

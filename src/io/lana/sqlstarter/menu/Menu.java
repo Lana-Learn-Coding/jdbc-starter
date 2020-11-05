@@ -41,6 +41,14 @@ public class Menu {
         commandMap.putIfAbsent(command.getActivator(), command);
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public MenuCommand getCommand(String key) {
+        return commandMap.get(key);
+    }
+
     public void run() {
         run(true);
     }
