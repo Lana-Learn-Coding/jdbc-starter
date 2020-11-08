@@ -1,4 +1,4 @@
-package io.lana.sqlstarter.repo;
+package io.lana.sqlstarter.conn;
 
 import io.lana.sqlstarter.utils.CaseUtils;
 

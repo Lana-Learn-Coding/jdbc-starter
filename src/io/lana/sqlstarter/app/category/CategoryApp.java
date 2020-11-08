@@ -1,11 +1,9 @@
-package io.lana.sqlstarter;
+package io.lana.sqlstarter.app.category;
 
+import io.lana.sqlstarter.conn.ConnectionUtils;
 import io.lana.sqlstarter.menu.Command;
 import io.lana.sqlstarter.menu.Menu;
-import io.lana.sqlstarter.repo.conn.PostgresConnection;
 import io.lana.sqlstarter.utils.ValidationUtils;
-import io.lana.sqlstarter.model.Category;
-import io.lana.sqlstarter.repo.CategoryDAO;
 
 import java.sql.Connection;
 import java.util.List;
@@ -13,8 +11,8 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 
-public class App {
-    private static final String LOCALE_PATH = "io.lana.sqlstarter.locale.Menu";
+public class CategoryApp {
+    private static final String LOCALE_PATH = "io.lana.sqlstarter.app.category.locale.Menu";
 
     private static ResourceBundle menuLang = ResourceBundle.getBundle(LOCALE_PATH, new Locale("en", "US"));
 
@@ -23,7 +21,7 @@ public class App {
     private static long seq = 1;
 
     public static void main(String[] args) {
-        try (Connection connection = PostgresConnection.INSTANCE.getConnection()) {
+        try (Connection connection = ConnectionUtils.getConnection()) {
             CategoryDAO categoryDAO = new CategoryDAO(connection);
             seq = categoryDAO.getLatestId() + 1;
 

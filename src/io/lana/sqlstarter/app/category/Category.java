@@ -1,4 +1,4 @@
-package io.lana.sqlstarter.model;
+package io.lana.sqlstarter.app.category;
 
 public class Category {
     private Integer id;
