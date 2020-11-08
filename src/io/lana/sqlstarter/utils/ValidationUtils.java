@@ -31,6 +31,23 @@ public class ValidationUtils {
         }
     }
 
+    public static Double enforceDouble(Scanner sc) {
+        return enforceDouble(sc, false);
+    }
+
+    public static Double enforceDouble(Scanner sc, boolean nullable) {
+        String input = sc.nextLine();
+        if (nullable && input.equals("null")) {
+            return null;
+        }
+        try {
+            return Double.parseDouble(input);
+        } catch (Exception e) {
+            System.out.println("Bad double format, enter again:");
+            return enforceDouble(sc, nullable);
+        }
+    }
+
     public static Boolean enforceBoolean(Scanner sc) {
         String input = enforceInput(sc, bool -> bool.equals("true") || bool.equals("false") ? null : "Bad boolean format");
         return input.equals("true");
