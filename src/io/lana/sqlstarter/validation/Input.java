@@ -49,7 +49,7 @@ public class Input {
         return transformer.apply(get());
     }
 
-    private static class LoopingValidationInput extends Input {
+    public static class LoopingValidationInput extends Input {
         private final Validator validator;
 
         private LoopingValidationInput(Supplier<String> inputSupplier, ValidationRule... rules) {
@@ -68,7 +68,7 @@ public class Input {
         }
     }
 
-    private static class OnceValidationInput extends Input {
+    public static class OnceValidationInput extends Input {
         private final Validator validator;
 
         private OnceValidationInput(Supplier<String> inputSupplier, ValidationRule... rules) {
