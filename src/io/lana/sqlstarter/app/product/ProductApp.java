@@ -1,9 +1,10 @@
 package io.lana.sqlstarter.app.product;
 
-import io.lana.sqlstarter.conn.ConnectionUtils;
+import io.lana.sqlstarter.dao.ConnectionUtils;
 import io.lana.sqlstarter.menu.Command;
 import io.lana.sqlstarter.menu.Menu;
-import io.lana.sqlstarter.utils.ValidationUtils;
+import io.lana.sqlstarter.validation.Input;
+import io.lana.sqlstarter.validation.Rule;
 
 import java.sql.Connection;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Scanner;
 
 public class ProductApp {
     private static final Scanner sc = new Scanner(System.in);
+    private static final Input input = Input.using(sc::nextLine);
 
     public static void main(String[] args) {
         try (Connection connection = ConnectionUtils.getConnection()) {
@@ -32,11 +34,7 @@ public class ProductApp {
 
     public static void importProduct(ProductDAO productDAO) {
         System.out.println("Enter code:");
-        Integer code = ValidationUtils.enforceInteger(sc);
-        if (code <= 0) {
-            System.out.println("Invalid code!");
-            return;
-        }
+        Integer code = input.until(Rule.integer(), Rule.min(1)).getAs(Integer.class);
 
         Optional<Product> product = productDAO.findOne(code);
         if (!product.isPresent()) {
@@ -49,11 +47,7 @@ public class ProductApp {
 
     public static void exportProduct(ProductDAO productDAO) {
         System.out.println("Enter code");
-        Integer code = ValidationUtils.enforceInteger(sc);
-        if (code <= 0) {
-            System.out.println("Invalid code!");
-            return;
-        }
+        Integer code = input.until(Rule.integer(), Rule.min(1)).getAs(Integer.class);
         Optional<Product> product = productDAO.findOne(code);
         if (!product.isPresent()) {
             System.out.println("Product not found");
@@ -64,15 +58,7 @@ public class ProductApp {
 
     private static void updateQuantity(ProductDAO productDAO, Product product, boolean exporting) {
         System.out.println("Enter quantity: ");
-        Integer quantity = ValidationUtils.enforceInteger(sc);
-        if (quantity <= 0) {
-            System.out.println("Quantity must > 0");
-            return;
-        }
-        if (exporting && quantity > product.getQuantity()) {
-            System.out.println("Quantity too large");
-            return;
-        }
+        Integer quantity = input.until(Rule.integer(), Rule.min(1), Rule.max(product.getQuantity())).getAs(Integer.class);
         if (exporting) {
             product.setQuantity(product.getQuantity() - quantity);
         } else {
@@ -86,41 +72,21 @@ public class ProductApp {
         Product product = new Product();
         product.setCode(code);
         System.out.println("Enter name of product");
-        product.setName(ValidationUtils.enforceNotEmpty(sc));
+        product.setName(input.until(Rule.notEmpty()).get());
         System.out.println("Enter producer of product");
-        product.setProducer(ValidationUtils.enforceNotEmpty(sc));
+        product.setProducer(input.until(Rule.notEmpty()).get());
         System.out.println("Enter quantity of product");
-        product.setQuantity(ValidationUtils.enforceInteger(sc));
+        product.setQuantity(input.until(Rule.integer(), Rule.min(0)).getAs(Integer.class));
         System.out.println("Enter price of product");
-        product.setPrice(ValidationUtils.enforceDouble(sc));
+        product.setPrice(input.until(Rule.doubleNum(), Rule.min(0D)).getAs(Double.class));
         System.out.println("Enter vat of product");
-        product.setVat(ValidationUtils.enforceInteger(sc));
-
-        if (product.getQuantity() < 0) {
-            System.out.println("Quantity must >= 0, try again");
-            return inputProduct(code);
-        }
-
-        if (product.getVat() < 0) {
-            System.out.println("VAT must >= 0, try again");
-            return inputProduct(code);
-        }
-
-        if (product.getPrice() <= 0) {
-            System.out.println("Price must > 0, try again");
-            return inputProduct(code);
-        }
-
+        product.setVat(input.until(Rule.integer(), Rule.min(0)).getAs(Integer.class));
         return product;
     }
 
     public static void updateProduct(ProductDAO productDAO) {
         System.out.println("Enter code:");
-        Integer code = ValidationUtils.enforceInteger(sc);
-        if (code <= 0) {
-            System.out.println("Invalid code!");
-            return;
-        }
+        Integer code = input.until(Rule.integer(), Rule.min(0)).getAs(Integer.class);
 
         if (!productDAO.exist(code)) {
             System.out.println("Product not found!");

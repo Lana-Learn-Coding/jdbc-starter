@@ -1,9 +1,11 @@
 package io.lana.sqlstarter.app.category;
 
-import io.lana.sqlstarter.conn.ConnectionUtils;
+import io.lana.sqlstarter.dao.ConnectionUtils;
 import io.lana.sqlstarter.menu.Command;
 import io.lana.sqlstarter.menu.Menu;
-import io.lana.sqlstarter.utils.ValidationUtils;
+import io.lana.sqlstarter.validation.Input;
+import io.lana.sqlstarter.validation.Rule;
+import io.lana.sqlstarter.validation.Validator;
 
 import java.sql.Connection;
 import java.util.List;
@@ -17,6 +19,8 @@ public class CategoryApp {
     private static ResourceBundle menuLang = ResourceBundle.getBundle(LOCALE_PATH, new Locale("en", "US"));
 
     private static final Scanner sc = new Scanner(System.in);
+
+    private static final Input input = Input.using(sc::nextLine);
 
     private static long seq = 1;
 
@@ -46,7 +50,7 @@ public class CategoryApp {
 
     private static void showAllCategoryByName(CategoryDAO repo) {
         System.out.println(menuLang.getString("app.op.query.name-to-find"));
-        String name = ValidationUtils.enforceNotEmpty(sc);
+        String name = input.until(Rule.notEmpty()).get();
         printAll(repo.findByName(name));
     }
 
@@ -59,10 +63,8 @@ public class CategoryApp {
 
     private static void updateCategory(CategoryDAO dao) {
         System.out.println(menuLang.getString("app.op.query.id-to-update"));
-        Integer id = ValidationUtils.enforceInteger(sc);
-        if (!dao.exist(id)) {
-            System.out.println(menuLang.getString("category.input.error.not-found"));
-        }
+        Integer id = input.until(Rule.integer(), Rule.exist(dao, "id", Integer.class)).getAs(Integer.class);
+
         Category category = inputCategory(dao);
         category.setId(id);
         dao.update(category);
@@ -72,11 +74,11 @@ public class CategoryApp {
         while (true) {
             Category category = new Category();
             System.out.println(menuLang.getString("category.input.name"));
-            category.setName(ValidationUtils.enforceNotEmpty(sc));
+            category.setName(input.until(Rule.notEmpty()).get());
             System.out.println(menuLang.getString("category.input.parent-id"));
-            category.setParentId(ValidationUtils.enforceInteger(sc));
+            category.setParentId(input.until(Rule.integer()).getAs(Integer.class));
             System.out.println(menuLang.getString("category.input.status"));
-            category.setStatus(ValidationUtils.enforceBoolean(sc));
+            category.setStatus(input.until(Rule.bool()).getAs(Boolean.class));
 
             if (category.getParentId() != 0 && !dao.exist(category.getParentId())) {
                 System.out.println(menuLang.getString("category.input.error.parent-id-not-found"));
@@ -95,7 +97,7 @@ public class CategoryApp {
 
     private static void deleteCategory(CategoryDAO categoryDAO) {
         System.out.println(menuLang.getString("app.op.query.id-to-delete"));
-        Integer id = ValidationUtils.enforceInteger(sc);
+        Integer id = input.until(Rule.integer()).getAs(Integer.class);
         if (categoryDAO.exist(id)) {
             categoryDAO.delete(id);
             System.out.println(menuLang.getString("app.op.ok"));
@@ -106,11 +108,8 @@ public class CategoryApp {
 
     private static void changeLanguage(Menu menu) {
         System.out.println(menuLang.getString("app.conf.input.lang"));
-        String lang = ValidationUtils.enforceInput(sc, (input) ->
-                input.equals("en") || input.equals("vi")
-                        ? null
-                        : menuLang.getString("app.conf.error.language-not-found")
-        );
+        String lang = input.until(Validator.ValidationRule.from(menuLang.getString("app.conf.error.language-not-found"),
+                context -> context.getInput().equals("en") || context.getInput().equals("vi"))).get();
 
         if (lang.equals("vi")) {
             menuLang = ResourceBundle.getBundle(LOCALE_PATH, new Locale("vi", "VN"));
