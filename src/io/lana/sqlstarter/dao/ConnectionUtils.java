@@ -1,4 +1,4 @@
-package io.lana.sqlstarter.conn;
+package io.lana.sqlstarter.dao;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

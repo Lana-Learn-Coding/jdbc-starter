@@ -1,4 +1,4 @@
-package io.lana.sqlstarter.utils;
+package io.lana.sqlstarter.dao;
 
 public class CaseUtils {
 

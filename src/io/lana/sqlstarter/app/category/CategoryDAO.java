@@ -1,7 +1,7 @@
 package io.lana.sqlstarter.app.category;
 
-import io.lana.sqlstarter.conn.BaseDAO;
-import io.lana.sqlstarter.conn.QueryResult;
+import io.lana.sqlstarter.dao.BaseDAO;
+import io.lana.sqlstarter.dao.QueryResult;
 
 import java.sql.*;
 import java.util.List;

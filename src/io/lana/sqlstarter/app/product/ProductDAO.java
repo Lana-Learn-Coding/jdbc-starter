@@ -1,6 +1,6 @@
 package io.lana.sqlstarter.app.product;
 
-import io.lana.sqlstarter.conn.BaseDAO;
+import io.lana.sqlstarter.dao.BaseDAO;
 
 import java.sql.Connection;
 import java.util.Optional;

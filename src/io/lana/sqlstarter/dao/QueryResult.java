@@ -1,6 +1,4 @@
-package io.lana.sqlstarter.conn;
-
-import io.lana.sqlstarter.utils.CaseUtils;
+package io.lana.sqlstarter.dao;
 
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
