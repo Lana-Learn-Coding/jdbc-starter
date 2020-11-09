@@ -2,6 +2,7 @@ package io.lana.sqlstarter.validation;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class Validator {
@@ -59,6 +60,10 @@ public class Validator {
 
     public interface ValidationRule {
         ValidationResult validate(ValidationContext context);
+
+        static ValidationRule from(String message, Predicate<ValidationContext> predicate) {
+            return context -> predicate.test(context) ? ValidationResult.succeed() : ValidationResult.failed(message);
+        }
     }
 
     public static class ValidationResult {
