@@ -1,30 +1,38 @@
 package io.lana.sqlstarter.app.product;
 
+import io.lana.sqlstarter.LanguageBundleProvider;
+import io.lana.sqlstarter.Translator;
 import io.lana.sqlstarter.dao.ConnectionUtils;
-import io.lana.sqlstarter.menu.command.Command;
 import io.lana.sqlstarter.menu.Menu;
+import io.lana.sqlstarter.menu.command.Command;
 import io.lana.sqlstarter.validation.Input;
 import io.lana.sqlstarter.validation.Rule;
+import io.lana.sqlstarter.validation.Validator;
 
 import java.sql.Connection;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class ProductApp {
+    private static final String LOCALE_PATH = "io.lana.sqlstarter.app.product.locale.Menu";
+
+    private static final ResourceBundle lang = LanguageBundleProvider.getBundle(LOCALE_PATH);
+
     private static final Scanner sc = new Scanner(System.in);
+
     private static final Input input = Input.using(sc::nextLine);
 
     public static void main(String[] args) {
         try (Connection connection = ConnectionUtils.getConnection()) {
             ProductDAO productDAO = new ProductDAO(connection);
 
-            Menu menu = new Menu(sc, "Product Management");
-            menu.addCommand(Command.of("1", "Import product", () -> importProduct(productDAO)));
-            menu.addCommand(Command.of("2", "Export product", () -> exportProduct(productDAO)));
-            menu.addCommand(Command.of("3", "Show all product", () -> showAllProduct(productDAO)));
-            menu.addCommand(Command.of("4", "Update product", () -> updateProduct(productDAO)));
-            menu.addCommand(Command.of("5", "Change language", () -> updateProduct(productDAO)));
-            menu.addCommand(Command.of("6", "Exit", menu::stop));
+            Menu menu = new Menu(sc, lang.getString("menu.title"));
+            menu.addCommand(Command.of("1", () -> lang.getString("menu.1"), () -> importProduct(productDAO)));
+            menu.addCommand(Command.of("2", () -> lang.getString("menu.2"), () -> exportProduct(productDAO)));
+            menu.addCommand(Command.of("3", () -> lang.getString("menu.3"), () -> showAllProduct(productDAO)));
+            menu.addCommand(Command.of("4", () -> lang.getString("menu.4"), () -> updateProduct(productDAO)));
+            menu.addCommand(Command.of("5", () -> lang.getString("menu.5"), ProductApp::changeLanguage));
+            menu.addCommand(Command.of("6", () -> lang.getString("menu.6"), menu::stop));
 
             menu.run(true);
         } catch (Exception e) {
@@ -33,12 +41,12 @@ public class ProductApp {
     }
 
     public static void importProduct(ProductDAO productDAO) {
-        System.out.println("Enter code:");
+        System.out.println(lang.getString("input.name"));
         Integer code = input.until(Rule.integer(), Rule.min(1)).getAs(Integer.class);
 
         Optional<Product> product = productDAO.findOne(code);
         if (!product.isPresent()) {
-            System.out.println("Product not found, creating new one:");
+            System.out.println(lang.getString("error.product-not-found") + ". " + lang.getString("action.create"));
             productDAO.save(inputProduct(code));
             return;
         }
@@ -46,26 +54,26 @@ public class ProductApp {
     }
 
     public static void exportProduct(ProductDAO productDAO) {
-        System.out.println("Enter code");
+        System.out.println(lang.getString("input.code"));
         Integer code = input.until(Rule.integer(), Rule.min(1)).getAs(Integer.class);
         Optional<Product> product = productDAO.findOne(code);
         if (!product.isPresent()) {
-            System.out.println("Product not found");
+            System.out.println(lang.getString("error.product-not-found"));
             return;
         }
 
         int quantity = product.get().getQuantity();
         updateQuantity(productDAO, product.get(), true);
-        while (!askYesNo("Continue export ?")) {
+        while (!askYesNo(lang.getString("input.continue-export"))) {
             updateQuantity(productDAO, product.get(), true);
         }
-        System.out.println("Exported " + (quantity - product.get().getQuantity()) + " product (origin: " + quantity + ")");
+        System.out.println(lang.getString("lang.product") + " " + (quantity - product.get().getQuantity()) + " "
+            + lang.getString("lang.exported") + " (" + quantity + ")");
         System.out.println(product.get().toString());
-        System.out.println("Print report");
     }
 
     private static void updateQuantity(ProductDAO productDAO, Product product, boolean exporting) {
-        System.out.println("Enter quantity: ");
+        System.out.println(lang.getString("input.quantity"));
         Integer quantity = input.until(Rule.integer(), Rule.min(1), Rule.max(product.getQuantity())).getAs(Integer.class);
         if (exporting) {
             product.setQuantity(product.getQuantity() - quantity);
@@ -79,34 +87,34 @@ public class ProductApp {
     private static Product inputProduct(Integer code) {
         Product product = new Product();
         product.setCode(code);
-        System.out.println("Enter name of product");
+        System.out.println(lang.getString("input.name"));
         product.setName(input.until(Rule.notEmpty()).get());
-        System.out.println("Enter producer of product");
+        System.out.println(lang.getString("input.producer"));
         product.setProducer(input.until(Rule.notEmpty()).get());
-        System.out.println("Enter quantity of product");
+        System.out.println(lang.getString("input.quantity"));
         product.setQuantity(input.until(Rule.integer(), Rule.min(0)).getAs(Integer.class));
-        System.out.println("Enter price of product");
+        System.out.println(lang.getString("input.price"));
         product.setPrice(input.until(Rule.doubleNum(), Rule.min(0D)).getAs(Double.class));
-        System.out.println("Enter vat of product");
+        System.out.println(lang.getString("input.vat"));
         product.setVat(input.until(Rule.integer(), Rule.min(0)).getAs(Integer.class));
         return product;
     }
 
     public static void updateProduct(ProductDAO productDAO) {
-        System.out.println("Enter code:");
+        System.out.println(lang.getString("input.code"));
         Integer code = input.until(Rule.integer(), Rule.min(0)).getAs(Integer.class);
 
         if (!productDAO.exist(code)) {
-            System.out.println("Product not found!");
+            System.out.println(lang.getString("error.product-not-found"));
             return;
         }
-        System.out.println("Update product: ");
+        System.out.println(lang.getString("action.update"));
         productDAO.update(inputProduct(code));
     }
 
     public static void showAllProduct(ProductDAO productDAO) {
         List<Product> products = productDAO.findAll();
-        String sort = askOneOf("Select a column to sort: ", "code", "name", "price", "quantity");
+        String sort = askOneOf(lang.getString("action.sort"), "code", "name", "price", "quantity");
         switch (sort) {
             case "code":
                 products = products.stream()
@@ -128,6 +136,8 @@ public class ProductApp {
                     .sorted(Comparator.comparingInt(Product::getQuantity))
                     .collect(Collectors.toList());
                 break;
+            default:
+                System.out.println(lang.getString("error.sort-not-found") + ", Use default sorting");
         }
         printAll(products);
     }
@@ -154,6 +164,14 @@ public class ProductApp {
     }
 
     public static void changeLanguage() {
+        System.out.println(lang.getString("conf.lang"));
+        String language = input.until(Validator.ValidationRule.from(lang.getString("conf.error.lang-not-found"),
+            context -> context.getInput().equals("en") || context.getInput().equals("vi"))).get();
 
+        if (language.equals("vi")) {
+            Translator.setLocale("vi_VN");
+        } else {
+            Translator.setLocale("en_US");
+        }
     }
 }

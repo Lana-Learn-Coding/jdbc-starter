@@ -1,4 +1,4 @@
-package io.lana.sqlstarter.app;
+package io.lana.sqlstarter;
 
 import java.util.Locale;
 import java.util.ResourceBundle;

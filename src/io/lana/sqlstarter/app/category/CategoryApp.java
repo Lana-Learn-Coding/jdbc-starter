@@ -1,22 +1,22 @@
 package io.lana.sqlstarter.app.category;
 
+import io.lana.sqlstarter.LanguageBundleProvider;
 import io.lana.sqlstarter.dao.ConnectionUtils;
-import io.lana.sqlstarter.menu.Command;
 import io.lana.sqlstarter.menu.Menu;
+import io.lana.sqlstarter.menu.command.Command;
 import io.lana.sqlstarter.validation.Input;
 import io.lana.sqlstarter.validation.Rule;
 import io.lana.sqlstarter.validation.Validator;
 
 import java.sql.Connection;
 import java.util.List;
-import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 
 public class CategoryApp {
     private static final String LOCALE_PATH = "io.lana.sqlstarter.app.category.locale.Menu";
 
-    private static ResourceBundle menuLang = ResourceBundle.getBundle(LOCALE_PATH, new Locale("en", "US"));
+    private static ResourceBundle menuLang = LanguageBundleProvider.getBundle(LOCALE_PATH);
 
     private static final Scanner sc = new Scanner(System.in);
 
@@ -29,14 +29,14 @@ public class CategoryApp {
             CategoryDAO categoryDAO = new CategoryDAO(connection);
             seq = categoryDAO.getLatestId() + 1;
 
-            Menu menu = new Menu(sc, menuLang.getString("menu.title"));
-            menu.addCommand(Command.of("1", menuLang.getString("menu.1"), () -> showAllCategory(categoryDAO)));
-            menu.addCommand(Command.of("2", menuLang.getString("menu.2"), () -> showAllCategoryByName(categoryDAO)));
-            menu.addCommand(Command.of("3", menuLang.getString("menu.3"), () -> createNewCategory(categoryDAO)));
-            menu.addCommand(Command.of("4", menuLang.getString("menu.4"), () -> deleteCategory(categoryDAO)));
-            menu.addCommand(Command.of("5", menuLang.getString("menu.5"), () -> updateCategory(categoryDAO)));
-            menu.addCommand(Command.of("6", menuLang.getString("menu.6"), () -> changeLanguage(menu)));
-            menu.addCommand(Command.of("7", menuLang.getString("menu.7"), menu::stop));
+            Menu menu = new Menu(sc, () -> menuLang.getString("menu.title"));
+            menu.addCommand(Command.of("1", () -> menuLang.getString("menu.1"), () -> showAllCategory(categoryDAO)));
+            menu.addCommand(Command.of("2", () -> menuLang.getString("menu.2"), () -> showAllCategoryByName(categoryDAO)));
+            menu.addCommand(Command.of("3", () -> menuLang.getString("menu.3"), () -> createNewCategory(categoryDAO)));
+            menu.addCommand(Command.of("4", () -> menuLang.getString("menu.4"), () -> deleteCategory(categoryDAO)));
+            menu.addCommand(Command.of("5", () -> menuLang.getString("menu.5"), () -> updateCategory(categoryDAO)));
+            menu.addCommand(Command.of("6", () -> menuLang.getString("menu.6"), () -> changeLanguage(menu)));
+            menu.addCommand(Command.of("7", () -> menuLang.getString("menu.7"), menu::stop));
 
             menu.run(true);
         } catch (Exception e) {
@@ -109,22 +109,14 @@ public class CategoryApp {
     private static void changeLanguage(Menu menu) {
         System.out.println(menuLang.getString("app.conf.input.lang"));
         String lang = input.until(Validator.ValidationRule.from(menuLang.getString("app.conf.error.language-not-found"),
-                context -> context.getInput().equals("en") || context.getInput().equals("vi"))).get();
+            context -> context.getInput().equals("en") || context.getInput().equals("vi"))).get();
 
         if (lang.equals("vi")) {
-            menuLang = ResourceBundle.getBundle(LOCALE_PATH, new Locale("vi", "VN"));
+            LanguageBundleProvider.setLocale("vi", "VN");
         } else {
-            menuLang = ResourceBundle.getBundle(LOCALE_PATH, new Locale("en", "US"));
+            LanguageBundleProvider.setLocale("en", "US");
         }
-
-        menu.setTitle(menuLang.getString("menu.title"));
-        menu.getCommand("1").setDescription(menuLang.getString("menu.1"));
-        menu.getCommand("2").setDescription(menuLang.getString("menu.2"));
-        menu.getCommand("3").setDescription(menuLang.getString("menu.3"));
-        menu.getCommand("4").setDescription(menuLang.getString("menu.4"));
-        menu.getCommand("5").setDescription(menuLang.getString("menu.5"));
-        menu.getCommand("6").setDescription(menuLang.getString("menu.6"));
-        menu.getCommand("7").setDescription(menuLang.getString("menu.7"));
+        menuLang = LanguageBundleProvider.getBundle(LOCALE_PATH);
     }
 
     private static void printAll(List<Category> categories) {
