@@ -3,7 +3,7 @@ package io.lana.sqlstarter.menu;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Menu {
     private final Map<String, MenuCommand> commandMap = new HashMap<>();
@@ -12,15 +12,20 @@ public class Menu {
 
     private boolean isRunning = false;
 
-    private String title = "Menu";
+    private Supplier<String> title = () -> "Menu";
 
     public Menu(Scanner sc) {
         this.scanner = sc;
     }
 
+    public Menu(Scanner sc, Supplier<String> titleGenerator) {
+        this.scanner = sc;
+        this.title = titleGenerator;
+    }
+
     public Menu(Scanner sc, String title) {
         this.scanner = sc;
-        this.title = title;
+        this.title = () -> title;
     }
 
     public boolean isRunning() {
@@ -33,7 +38,7 @@ public class Menu {
 
 
     public String getTitle() {
-        return this.title;
+        return this.title.get();
     }
 
 
@@ -42,7 +47,11 @@ public class Menu {
     }
 
     public void setTitle(String title) {
-        this.title = title;
+        this.title = () -> title;
+    }
+
+    public void setTitleGenerator(Supplier<String> titleGenerator) {
+        this.title = titleGenerator;
     }
 
     public MenuCommand getCommand(String key) {

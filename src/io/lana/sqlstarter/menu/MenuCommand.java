@@ -5,7 +5,5 @@ public interface MenuCommand {
 
     String getDescription();
 
-    void setDescription(String description);
-
     MenuCommandExecutor getExecutor();
 }

@@ -1,15 +1,14 @@
 package io.lana.sqlstarter.app.product;
 
 import io.lana.sqlstarter.dao.ConnectionUtils;
-import io.lana.sqlstarter.menu.Command;
+import io.lana.sqlstarter.menu.command.Command;
 import io.lana.sqlstarter.menu.Menu;
 import io.lana.sqlstarter.validation.Input;
 import io.lana.sqlstarter.validation.Rule;
 
 import java.sql.Connection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ProductApp {
     private static final Scanner sc = new Scanner(System.in);
@@ -24,7 +23,8 @@ public class ProductApp {
             menu.addCommand(Command.of("2", "Export product", () -> exportProduct(productDAO)));
             menu.addCommand(Command.of("3", "Show all product", () -> showAllProduct(productDAO)));
             menu.addCommand(Command.of("4", "Update product", () -> updateProduct(productDAO)));
-            menu.addCommand(Command.of("5", "Exit", menu::stop));
+            menu.addCommand(Command.of("5", "Change language", () -> updateProduct(productDAO)));
+            menu.addCommand(Command.of("6", "Exit", menu::stop));
 
             menu.run(true);
         } catch (Exception e) {
@@ -53,7 +53,15 @@ public class ProductApp {
             System.out.println("Product not found");
             return;
         }
+
+        int quantity = product.get().getQuantity();
         updateQuantity(productDAO, product.get(), true);
+        while (!askYesNo("Continue export ?")) {
+            updateQuantity(productDAO, product.get(), true);
+        }
+        System.out.println("Exported " + (quantity - product.get().getQuantity()) + " product (origin: " + quantity + ")");
+        System.out.println(product.get().toString());
+        System.out.println("Print report");
     }
 
     private static void updateQuantity(ProductDAO productDAO, Product product, boolean exporting) {
@@ -97,10 +105,55 @@ public class ProductApp {
     }
 
     public static void showAllProduct(ProductDAO productDAO) {
-        printAll(productDAO.findAll());
+        List<Product> products = productDAO.findAll();
+        String sort = askOneOf("Select a column to sort: ", "code", "name", "price", "quantity");
+        switch (sort) {
+            case "code":
+                products = products.stream()
+                    .sorted(Comparator.comparingInt(Product::getCode))
+                    .collect(Collectors.toList());
+                break;
+            case "name":
+                products = products.stream()
+                    .sorted(Comparator.comparing(Product::getName))
+                    .collect(Collectors.toList());
+                break;
+            case "price":
+                products = products.stream()
+                    .sorted(Comparator.comparingDouble(Product::getPrice))
+                    .collect(Collectors.toList());
+                break;
+            case "quantity":
+                products = products.stream()
+                    .sorted(Comparator.comparingInt(Product::getQuantity))
+                    .collect(Collectors.toList());
+                break;
+        }
+        printAll(products);
     }
 
     private static void printAll(List<Product> products) {
         products.forEach(System.out::println);
+    }
+
+    private static boolean askYesNo(String message) {
+        System.out.println(message + "[y/N]:");
+        String yn = input.get();
+        return !yn.equals("y") && !yn.equals("Y");
+    }
+
+    private static String askOneOf(String message, String... options) {
+        while (true) {
+            System.out.println(message + "[" + String.join("/", options) + "]:");
+            String selected = input.get();
+            if (Arrays.asList(options).contains(selected.trim())) {
+                return selected;
+            }
+            System.out.println("Invalid, try again");
+        }
+    }
+
+    public static void changeLanguage() {
+
     }
 }

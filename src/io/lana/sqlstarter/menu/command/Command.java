@@ -1,13 +1,18 @@
-package io.lana.sqlstarter.menu;
+package io.lana.sqlstarter.menu.command;
+
+import io.lana.sqlstarter.menu.MenuCommand;
+import io.lana.sqlstarter.menu.MenuCommandExecutor;
+
+import java.util.function.Supplier;
 
 public class Command implements MenuCommand {
     private final MenuCommandExecutor executor;
 
     private final String activator;
 
-    private String description;
+    private final String description;
 
-    private Command(String activator, String description, MenuCommandExecutor executor) {
+    protected Command(String activator, String description, MenuCommandExecutor executor) {
         this.executor = executor;
         this.activator = activator;
         this.description = description;
@@ -15,6 +20,10 @@ public class Command implements MenuCommand {
 
     public static Command of(String activator, String description, MenuCommandExecutor executor) {
         return new Command(activator, description, executor);
+    }
+
+    public static Command of(String activator, Supplier<String> descriptionGenerator, MenuCommandExecutor executor) {
+        return new DynamicDescriptionCommand(activator, descriptionGenerator, executor);
     }
 
 
@@ -30,11 +39,6 @@ public class Command implements MenuCommand {
     @Override
     public String getDescription() {
         return this.description;
-    }
-
-    @Override
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Override
