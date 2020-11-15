@@ -1,7 +1,6 @@
 package io.lana.sqlstarter.app.product;
 
 import io.lana.sqlstarter.LanguageBundleProvider;
-import io.lana.sqlstarter.Translator;
 import io.lana.sqlstarter.dao.ConnectionUtils;
 import io.lana.sqlstarter.menu.Menu;
 import io.lana.sqlstarter.menu.command.Command;
@@ -15,6 +14,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -68,7 +69,7 @@ public class ProductApp {
             Optional<Product> product = productDAO.findOne(code);
             if (!product.isPresent()) {
                 System.out.println(lang.getString("error.product-not-found"));
-                return;
+                continue;
             }
 
             int quantity = product.get().getQuantity();
@@ -86,14 +87,27 @@ public class ProductApp {
     private static void printReport(Map<Product, Integer> reportMap) {
         Path cwd = Paths.get(".").toAbsolutePath().normalize();
         System.out.println(lang.getString("input.filename"));
-        String filename = input.until(Rule.notBlank(), Validator.ValidationRule.from(lang.getString("error.file-exist"),
-            input -> !Files.exists(cwd.resolve(input.getInput())))).get();
+        String filename = input.until(Validator.ValidationRule.from(lang.getString("error.file-exist"),
+            input -> input.getInput().trim().isEmpty() || !Files.exists(cwd.resolve(input.getInput())))).get();
+
+        if (filename.isEmpty()) {
+            filename = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+        }
 
         filename = cwd.resolve(filename).toString();
+        String border = Product.BORDER + "----------+\n";
+        String format = Product.FORMAT + " %8s |\n";
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+            writer.write(border);
+            writer.write(String.format(format, lang.getString("product.code"), lang.getString("product.name"),
+                lang.getString("product.producer"), lang.getString("product.quantity"), lang.getString("product.price"),
+                "VAT", lang.getString("lang.exported")));
+            writer.write(border);
             for (Product product : reportMap.keySet()) {
-                writer.write(product.toString() + " " + reportMap.get(product));
+                writer.write(String.format(format, product.getCode(), product.getName(), product.getProducer(),
+                    product.getQuantity(), Product.PRICE_FORMATTER.format(product.getPrice()), product.getVat(), reportMap.get(product)));
             }
+            writer.write(border);
             System.out.println(lang.getString("lang.exported") + " " + filename);
             writer.flush();
         } catch (Exception e) {
@@ -175,7 +189,19 @@ public class ProductApp {
     }
 
     private static void printAll(List<Product> products) {
-        products.forEach(System.out::println);
+        StringBuilder builder = new StringBuilder(Product.BORDER);
+        builder.append("\n");
+        builder.append(String.format(Product.FORMAT, lang.getString("product.code"), lang.getString("product.name"),
+            lang.getString("product.producer"), lang.getString("product.quantity"), lang.getString("product.price"), "VAT"));
+        builder.append("\n");
+        builder.append(Product.BORDER);
+        builder.append("\n");
+        products.forEach((product) -> {
+            builder.append(product.toString());
+            builder.append("\n");
+        });
+        builder.append(Product.BORDER);
+        System.out.println(builder.toString());
     }
 
     private static boolean askYesNo(String message) {
@@ -201,9 +227,9 @@ public class ProductApp {
             context -> context.getInput().equals("en") || context.getInput().equals("vi"))).get();
 
         if (language.equals("vi")) {
-            Translator.setLocale("vi_VN");
-        } else {
-            Translator.setLocale("en_US");
+            LanguageBundleProvider.setLocale("vi", "VN");
+            return;
         }
+        LanguageBundleProvider.setLocale("en", "US");
     }
 }

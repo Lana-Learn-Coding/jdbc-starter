@@ -1,6 +1,14 @@
 package io.lana.sqlstarter.app.product;
 
+import java.text.DecimalFormat;
+
 public class Product {
+    public static final String BORDER = "+-------+-----------------+--------------+----------+----------+-----+";
+
+    public static final String FORMAT = "| %-5s | %-15s | %-12s | %-8s | %-8s | %-3s |";
+
+    public static final DecimalFormat PRICE_FORMATTER = new DecimalFormat("#.00");
+
     private Integer code;
 
     private String name;
@@ -63,13 +71,7 @@ public class Product {
 
     @Override
     public String toString() {
-        return "Product{" +
-               "code=" + code +
-               ", name='" + name + '\'' +
-               ", producer='" + producer + '\'' +
-               ", quantity=" + quantity +
-               ", price=" + price +
-               ", vat=" + vat +
-               '}';
+        return String.format(FORMAT, getCode(), getName(), getProducer(), getQuantity(),
+            PRICE_FORMATTER.format(getPrice()), getVat());
     }
 }
