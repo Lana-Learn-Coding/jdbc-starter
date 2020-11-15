@@ -16,7 +16,7 @@ import java.util.Scanner;
 public class CategoryApp {
     private static final String LOCALE_PATH = "io.lana.sqlstarter.app.category.locale.Menu";
 
-    private static ResourceBundle menuLang = LanguageBundle.getBundle(LOCALE_PATH);
+    private static ResourceBundle lang = LanguageBundle.getBundle(LOCALE_PATH);
 
     private static final Scanner sc = new Scanner(System.in);
 
@@ -29,14 +29,14 @@ public class CategoryApp {
             CategoryDAO categoryDAO = new CategoryDAO(connection);
             seq = categoryDAO.getLatestId() + 1;
 
-            Menu menu = new Menu(sc, () -> menuLang.getString("menu.title"));
-            menu.addCommand(Command.of("1", () -> menuLang.getString("menu.1"), () -> showAllCategory(categoryDAO)));
-            menu.addCommand(Command.of("2", () -> menuLang.getString("menu.2"), () -> showAllCategoryByName(categoryDAO)));
-            menu.addCommand(Command.of("3", () -> menuLang.getString("menu.3"), () -> createNewCategory(categoryDAO)));
-            menu.addCommand(Command.of("4", () -> menuLang.getString("menu.4"), () -> deleteCategory(categoryDAO)));
-            menu.addCommand(Command.of("5", () -> menuLang.getString("menu.5"), () -> updateCategory(categoryDAO)));
-            menu.addCommand(Command.of("6", () -> menuLang.getString("menu.6"), () -> changeLanguage(menu)));
-            menu.addCommand(Command.of("7", () -> menuLang.getString("menu.7"), menu::stop));
+            Menu menu = new Menu(sc, () -> lang.getString("menu.title"));
+            menu.addCommand(Command.of("1", () -> lang.getString("menu.1"), () -> showAllCategory(categoryDAO)));
+            menu.addCommand(Command.of("2", () -> lang.getString("menu.2"), () -> showAllCategoryByName(categoryDAO)));
+            menu.addCommand(Command.of("3", () -> lang.getString("menu.3"), () -> createNewCategory(categoryDAO)));
+            menu.addCommand(Command.of("4", () -> lang.getString("menu.4"), () -> deleteCategory(categoryDAO)));
+            menu.addCommand(Command.of("5", () -> lang.getString("menu.5"), () -> updateCategory(categoryDAO)));
+            menu.addCommand(Command.of("6", () -> lang.getString("menu.6"), () -> changeLanguage(menu)));
+            menu.addCommand(Command.of("7", () -> lang.getString("menu.7"), menu::stop));
 
             menu.run(true);
         } catch (Exception e) {
@@ -49,8 +49,8 @@ public class CategoryApp {
     }
 
     private static void showAllCategoryByName(CategoryDAO repo) {
-        System.out.println(menuLang.getString("app.op.query.name-to-find"));
-        String name = input.until(Rule.notEmpty()).get();
+        System.out.println(lang.getString("app.op.query.name-to-find"));
+        String name = input.until(Rule.notEmpty(lang.getString("validation.not-empty"))).get();
         printAll(repo.findByName(name));
     }
 
@@ -62,8 +62,9 @@ public class CategoryApp {
     }
 
     private static void updateCategory(CategoryDAO dao) {
-        System.out.println(menuLang.getString("app.op.query.id-to-update"));
-        Integer id = input.until(Rule.integer(), Rule.exist(dao, "id", Integer.class)).getAs(Integer.class);
+        System.out.println(lang.getString("app.op.query.id-to-update"));
+        Integer id = input.until(Rule.integer(lang.getString("validation.integer")),
+            Rule.exist(lang.getString("validation.exist"), dao, "id", Integer.class)).getAs(Integer.class);
 
         Category category = inputCategory(dao);
         category.setId(id);
@@ -73,20 +74,20 @@ public class CategoryApp {
     private static Category inputCategory(CategoryDAO dao) {
         while (true) {
             Category category = new Category();
-            System.out.println(menuLang.getString("category.input.name"));
-            category.setName(input.until(Rule.notEmpty()).get());
-            System.out.println(menuLang.getString("category.input.parent-id"));
-            category.setParentId(input.until(Rule.integer()).getAs(Integer.class));
-            System.out.println(menuLang.getString("category.input.status"));
-            category.setStatus(input.until(Rule.bool()).getAs(Boolean.class));
+            System.out.println(lang.getString("category.input.name"));
+            category.setName(input.until(Rule.notEmpty(lang.getString("validation.not-empty"))).get());
+            System.out.println(lang.getString("category.input.parent-id"));
+            category.setParentId(input.until(Rule.integer(lang.getString("validation.integer"))).getAs(Integer.class));
+            System.out.println(lang.getString("category.input.status"));
+            category.setStatus(input.until(Rule.bool(lang.getString("validation.bool"))).getAs(Boolean.class));
 
             if (category.getParentId() != 0 && !dao.exist(category.getParentId())) {
-                System.out.println(menuLang.getString("category.input.error.parent-id-not-found"));
+                System.out.println(lang.getString("category.input.error.parent-id-not-found"));
                 continue;
             }
 
             if (dao.existByName(category.getName())) {
-                System.out.println(menuLang.getString("category.input.error.name-duplicated"));
+                System.out.println(lang.getString("category.input.error.name-duplicated"));
                 continue;
             }
 
@@ -96,19 +97,19 @@ public class CategoryApp {
     }
 
     private static void deleteCategory(CategoryDAO categoryDAO) {
-        System.out.println(menuLang.getString("app.op.query.id-to-delete"));
-        Integer id = input.until(Rule.integer()).getAs(Integer.class);
+        System.out.println(lang.getString("app.op.query.id-to-delete"));
+        Integer id = input.until(Rule.integer(lang.getString("validation.integer"))).getAs(Integer.class);
         if (categoryDAO.exist(id)) {
             categoryDAO.delete(id);
-            System.out.println(menuLang.getString("app.op.ok"));
+            System.out.println(lang.getString("app.op.ok"));
             return;
         }
-        System.out.println(menuLang.getString("category.input.error.not-found"));
+        System.out.println(lang.getString("category.input.error.not-found"));
     }
 
     private static void changeLanguage(Menu menu) {
-        System.out.println(menuLang.getString("app.conf.input.lang"));
-        String lang = input.until(Validator.ValidationRule.from(menuLang.getString("app.conf.error.language-not-found"),
+        System.out.println(lang.getString("app.conf.input.lang"));
+        String lang = input.until(Validator.ValidationRule.from(CategoryApp.lang.getString("app.conf.error.language-not-found"),
             context -> context.getInput().equals("en") || context.getInput().equals("vi"))).get();
 
         if (lang.equals("vi")) {
@@ -116,7 +117,7 @@ public class CategoryApp {
         } else {
             LanguageBundle.setLocale("en", "US");
         }
-        menuLang = LanguageBundle.getBundle(LOCALE_PATH);
+        CategoryApp.lang = LanguageBundle.getBundle(LOCALE_PATH);
     }
 
     private static void printAll(List<Category> categories) {

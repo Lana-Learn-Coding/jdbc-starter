@@ -16,103 +16,79 @@ public class Rule {
         return context -> context.getInput() != null ? rule.validate(context) : ValidationResult.succeed();
     }
 
-    public static ValidationRule notBlank() {
-        return context -> {
-            String input = context.getInput();
-            if (input != null && !input.trim().isEmpty()) {
-                return ValidationResult.succeed();
-            }
-            return ValidationResult.failed("Must not blank");
-        };
-    }
-
-    public static ValidationRule notEmpty() {
+    public static ValidationRule notEmpty(String msg) {
         return context -> {
             String input = context.getInput();
             if (input != null && !input.isEmpty()) {
                 return ValidationResult.succeed();
             }
-            return ValidationResult.failed("Must not empty");
+            return ValidationResult.failed(msg);
         };
     }
 
-    public static ValidationRule min(Integer min) {
+    public static ValidationRule min(String msg, Integer min) {
         return nullable(context -> {
             Integer input = context.getInputOfType(Integer.class, Integer::parseInt);
-            return input >= min ? ValidationResult.succeed() : ValidationResult.failed("Must at least " + min);
+            return input >= min ? ValidationResult.succeed() : ValidationResult.failed(msg + " " + min);
         });
     }
 
-    public static ValidationRule min(Double min) {
+    public static ValidationRule min(String msg, Double min) {
         return nullable(context -> {
             Double input = context.getInputOfType(Double.class, Double::parseDouble);
-            return input >= min ? ValidationResult.succeed() : ValidationResult.failed("Must at least " + min);
+            return input >= min ? ValidationResult.succeed() : ValidationResult.failed(msg + " " + min);
         });
     }
 
-    public static ValidationRule max(Integer max) {
-        return nullable(context -> {
-            Integer input = context.getInputOfType(Integer.class, Integer::parseInt);
-            return input <= max ? ValidationResult.succeed() : ValidationResult.failed("Must at at most " + max);
-        });
-    }
-
-    public static ValidationRule max(Double max) {
-        return nullable(context -> {
-            Double input = context.getInputOfType(Double.class, Double::parseDouble);
-            return input <= max ? ValidationResult.succeed() : ValidationResult.failed("Must at at most " + max);
-        });
-    }
-
-    public static ValidationRule doubleNum() {
+    public static ValidationRule doubleNum(String msg) {
         return nullable(context -> {
             try {
                 Double input = Double.parseDouble(context.getInput());
                 context.setParsedInputValue(input);
                 return ValidationResult.succeed();
             } catch (Exception e) {
-                return ValidationResult.failed("Bad double format");
+                return ValidationResult.failed(msg);
             }
         });
     }
 
-    public static ValidationRule integer() {
+    public static ValidationRule integer(String msg) {
         return nullable(context -> {
             try {
                 Integer input = Integer.parseInt(context.getInput());
                 context.setParsedInputValue(input);
                 return ValidationResult.succeed();
             } catch (Exception e) {
-                return ValidationResult.failed("Bad integer format");
+                return ValidationResult.failed(msg);
             }
         });
     }
 
-    public static ValidationRule bool() {
+    public static ValidationRule bool(String msg) {
         return nullable(context -> {
             String input = context.getInput().trim();
             if (input.equals("true") || input.equals("false")) {
                 return ValidationResult.succeed();
             }
-            return ValidationResult.failed("Must be true/false");
+            return ValidationResult.failed(msg);
         });
     }
 
-    public static <T> ValidationRule unique(BaseDAO<?> dao, String col, Class<T> type) {
+    public static <T> ValidationRule unique(String msg, BaseDAO<?> dao, String col, Class<T> type) {
         return nullable(context -> {
             T input = context.getInputOfType(type, s -> valueOf(s, type));
             return dao.exist(col + " =?", input)
-                    ? ValidationResult.failed("The " + col + " has already taken")
-                    : ValidationResult.succeed();
+                ? ValidationResult.failed(msg)
+                : ValidationResult.succeed();
         });
     }
 
-    public static <T> ValidationRule exist(BaseDAO<?> dao, String col, Class<T> type) {
+    public static <T> ValidationRule exist(String msg, BaseDAO<?> dao, String col, Class<T> type) {
         return nullable(context -> {
             T input = context.getInputOfType(type, s -> valueOf(s, type));
             return dao.exist(col + " =?", input)
-                    ? ValidationResult.succeed()
-                    : ValidationResult.failed("The " + col + " is not exist");
+                ? ValidationResult.succeed()
+                : ValidationResult.failed(msg);
         });
     }
 

@@ -51,24 +51,26 @@ public class ProductApp {
 
     public static void importProduct(ProductDAO productDAO) {
         System.out.println(lang.getString("input.code"));
-        Integer code = input.until(Rule.integer(), Rule.min(1)).getAs(Integer.class);
+        Integer code = input.until(Rule.integer(lang.getString("validation.integer")),
+            Rule.min(lang.getString("validation.min"), 1)).getAs(Integer.class);
 
         Optional<Product> product = productDAO.findOne(code);
         if (!product.isPresent()) {
             System.out.println(lang.getString("error.product-not-found") + ". " + lang.getString("action.create"));
             productDAO.save(inputProduct(code));
-            System.out.println(product.toString());
+            printAll(Collections.singletonList(productDAO.findOne(code).get()));
             return;
         }
         updateQuantity(productDAO, product.get(), false);
-        System.out.println(product.get().toString());
+        printAll(Collections.singletonList(product.get()));
     }
 
     public static void exportProduct(ProductDAO productDAO) {
         Map<Product, Integer> reportMap = new HashMap<>();
         do {
             System.out.println(lang.getString("input.code"));
-            Integer code = input.until(Rule.integer(), Rule.min(1)).getAs(Integer.class);
+            Integer code = input.until(Rule.integer(lang.getString("validation.integer")),
+                Rule.min(lang.getString("validation.min"), 1)).getAs(Integer.class);
             Optional<Product> product = productDAO.findOne(code);
             if (!product.isPresent()) {
                 System.out.println(lang.getString("error.product-not-found"));
@@ -77,7 +79,7 @@ public class ProductApp {
 
             int quantity = product.get().getQuantity();
             updateQuantity(productDAO, product.get(), true);
-            System.out.println(product.get().toString());
+            printAll(Collections.singletonList(product.get()));
             reportMap.put(product.get(), quantity - product.get().getQuantity());
         } while (askYesNo(lang.getString("input.continue-export")));
 
@@ -120,7 +122,8 @@ public class ProductApp {
 
     private static void updateQuantity(ProductDAO productDAO, Product product, boolean exporting) {
         System.out.println(lang.getString("input.quantity"));
-        Integer quantity = input.until(Rule.integer(), Rule.min(1)).getAs(Integer.class);
+        Integer quantity = input.until(Rule.integer(lang.getString("validation.integer")),
+            Rule.min(lang.getString("validation.min"), 1)).getAs(Integer.class);
         if (exporting) {
             if (quantity > product.getQuantity()) {
                 System.out.println(lang.getString("error.not-enough-product"));
@@ -137,21 +140,25 @@ public class ProductApp {
         Product product = new Product();
         product.setCode(code);
         System.out.println(lang.getString("input.name"));
-        product.setName(input.until(Rule.notEmpty()).get());
+        product.setName(input.until(Rule.notEmpty(lang.getString("validation.not-empty"))).get());
         System.out.println(lang.getString("input.producer"));
-        product.setProducer(input.until(Rule.notEmpty()).get());
+        product.setProducer(input.until(Rule.notEmpty(lang.getString("validation.not-empty"))).get());
         System.out.println(lang.getString("input.quantity"));
-        product.setQuantity(input.until(Rule.integer(), Rule.min(0)).getAs(Integer.class));
+        product.setQuantity(input.until(Rule.integer(lang.getString("validation.integer")),
+            Rule.min(lang.getString("validation.min"), 1)).getAs(Integer.class));
         System.out.println(lang.getString("input.price"));
-        product.setPrice(input.until(Rule.doubleNum(), Rule.min(0D)).getAs(Double.class));
+        product.setPrice(input.until(Rule.doubleNum(lang.getString("validation.doubleNum")),
+            Rule.min(lang.getString("validation.min"), 0D)).getAs(Double.class));
         System.out.println(lang.getString("input.vat"));
-        product.setVat(input.until(Rule.integer(), Rule.min(0)).getAs(Integer.class));
+        product.setVat(input.until(Rule.integer(lang.getString("validation.integer")),
+            Rule.min(lang.getString("validation.min"), 0)).getAs(Integer.class));
         return product;
     }
 
     public static void updateProduct(ProductDAO productDAO) {
         System.out.println(lang.getString("input.code"));
-        Integer code = input.until(Rule.integer(), Rule.min(0)).getAs(Integer.class);
+        Integer code = input.until(Rule.integer(lang.getString("validation.integer")),
+            Rule.min(lang.getString("validation.min"), 1)).getAs(Integer.class);
 
         if (!productDAO.exist(code)) {
             System.out.println(lang.getString("error.product-not-found"));
