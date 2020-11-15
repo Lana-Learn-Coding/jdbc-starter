@@ -9,6 +9,11 @@ import io.lana.sqlstarter.validation.Input;
 import io.lana.sqlstarter.validation.Rule;
 import io.lana.sqlstarter.validation.Validator;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,47 +46,74 @@ public class ProductApp {
     }
 
     public static void importProduct(ProductDAO productDAO) {
-        System.out.println(lang.getString("input.name"));
+        System.out.println(lang.getString("input.code"));
         Integer code = input.until(Rule.integer(), Rule.min(1)).getAs(Integer.class);
 
         Optional<Product> product = productDAO.findOne(code);
         if (!product.isPresent()) {
             System.out.println(lang.getString("error.product-not-found") + ". " + lang.getString("action.create"));
             productDAO.save(inputProduct(code));
+            System.out.println(product.toString());
             return;
         }
         updateQuantity(productDAO, product.get(), false);
+        System.out.println(product.get().toString());
     }
 
     public static void exportProduct(ProductDAO productDAO) {
-        System.out.println(lang.getString("input.code"));
-        Integer code = input.until(Rule.integer(), Rule.min(1)).getAs(Integer.class);
-        Optional<Product> product = productDAO.findOne(code);
-        if (!product.isPresent()) {
-            System.out.println(lang.getString("error.product-not-found"));
-            return;
-        }
+        Map<Product, Integer> reportMap = new HashMap<>();
+        do {
+            System.out.println(lang.getString("input.code"));
+            Integer code = input.until(Rule.integer(), Rule.min(1)).getAs(Integer.class);
+            Optional<Product> product = productDAO.findOne(code);
+            if (!product.isPresent()) {
+                System.out.println(lang.getString("error.product-not-found"));
+                return;
+            }
 
-        int quantity = product.get().getQuantity();
-        updateQuantity(productDAO, product.get(), true);
-        while (!askYesNo(lang.getString("input.continue-export"))) {
+            int quantity = product.get().getQuantity();
             updateQuantity(productDAO, product.get(), true);
+            System.out.println(product.get().toString());
+            reportMap.put(product.get(), quantity - product.get().getQuantity());
+        } while (askYesNo(lang.getString("input.continue-export")));
+
+        boolean printReport = askYesNo(lang.getString("action.print-report"));
+        if (printReport) {
+            printReport(reportMap);
         }
-        System.out.println(lang.getString("lang.product") + " " + (quantity - product.get().getQuantity()) + " "
-            + lang.getString("lang.exported") + " (" + quantity + ")");
-        System.out.println(product.get().toString());
+    }
+
+    private static void printReport(Map<Product, Integer> reportMap) {
+        Path cwd = Paths.get(".").toAbsolutePath().normalize();
+        System.out.println(lang.getString("input.filename"));
+        String filename = input.until(Rule.notBlank(), Validator.ValidationRule.from(lang.getString("error.file-exist"),
+            input -> !Files.exists(cwd.resolve(input.getInput())))).get();
+
+        filename = cwd.resolve(filename).toString();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+            for (Product product : reportMap.keySet()) {
+                writer.write(product.toString() + " " + reportMap.get(product));
+            }
+            System.out.println(lang.getString("lang.exported") + " " + filename);
+            writer.flush();
+        } catch (Exception e) {
+            System.out.println(lang.getString("error.cannot-write-file"));
+        }
     }
 
     private static void updateQuantity(ProductDAO productDAO, Product product, boolean exporting) {
         System.out.println(lang.getString("input.quantity"));
-        Integer quantity = input.until(Rule.integer(), Rule.min(1), Rule.max(product.getQuantity())).getAs(Integer.class);
+        Integer quantity = input.until(Rule.integer(), Rule.min(1)).getAs(Integer.class);
         if (exporting) {
+            if (quantity > product.getQuantity()) {
+                System.out.println(lang.getString("error.not-enough-product"));
+                return;
+            }
             product.setQuantity(product.getQuantity() - quantity);
         } else {
             product.setQuantity(product.getQuantity() + quantity);
         }
         productDAO.update(product);
-        System.out.println("ok");
     }
 
     private static Product inputProduct(Integer code) {
@@ -137,7 +169,7 @@ public class ProductApp {
                     .collect(Collectors.toList());
                 break;
             default:
-                System.out.println(lang.getString("error.sort-not-found") + ", Use default sorting");
+                System.out.println(lang.getString("error.sort-not-found"));
         }
         printAll(products);
     }
@@ -149,7 +181,7 @@ public class ProductApp {
     private static boolean askYesNo(String message) {
         System.out.println(message + "[y/N]:");
         String yn = input.get();
-        return !yn.equals("y") && !yn.equals("Y");
+        return yn.equals("y") || yn.equals("Y");
     }
 
     private static String askOneOf(String message, String... options) {
@@ -159,7 +191,7 @@ public class ProductApp {
             if (Arrays.asList(options).contains(selected.trim())) {
                 return selected;
             }
-            System.out.println("Invalid, try again");
+            System.out.println(lang.getString("error.sort-not-found"));
         }
     }
 
