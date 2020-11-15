@@ -1,6 +1,6 @@
 package io.lana.sqlstarter.app.product;
 
-import io.lana.sqlstarter.LanguageBundleProvider;
+import io.lana.sqlstarter.LanguageBundle;
 import io.lana.sqlstarter.dao.ConnectionUtils;
 import io.lana.sqlstarter.menu.Menu;
 import io.lana.sqlstarter.menu.command.Command;
@@ -20,19 +20,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ProductApp {
-    private static final String LOCALE_PATH = "io.lana.sqlstarter.app.product.locale.Menu";
-
-    private static final ResourceBundle lang = LanguageBundleProvider.getBundle(LOCALE_PATH);
-
     private static final Scanner sc = new Scanner(System.in);
 
     private static final Input input = Input.using(sc::nextLine);
+
+    private static final String LOCALE_PATH = "io.lana.sqlstarter.app.product.locale.Menu";
+
+    private static ResourceBundle lang = LanguageBundle.getBundle(LOCALE_PATH);
 
     public static void main(String[] args) {
         try (Connection connection = ConnectionUtils.getConnection()) {
             ProductDAO productDAO = new ProductDAO(connection);
 
-            Menu menu = new Menu(sc, lang.getString("menu.title"));
+            Menu menu = new Menu(sc);
             menu.addCommand(Command.of("1", () -> lang.getString("menu.1"), () -> importProduct(productDAO)));
             menu.addCommand(Command.of("2", () -> lang.getString("menu.2"), () -> exportProduct(productDAO)));
             menu.addCommand(Command.of("3", () -> lang.getString("menu.3"), () -> showAllProduct(productDAO)));
@@ -40,6 +40,9 @@ public class ProductApp {
             menu.addCommand(Command.of("5", () -> lang.getString("menu.5"), ProductApp::changeLanguage));
             menu.addCommand(Command.of("6", () -> lang.getString("menu.6"), menu::stop));
 
+            menu.setTitle(() -> lang.getString("menu.title"));
+            menu.setAskOptionMessage(() -> lang.getString("menu.select"));
+            menu.setInvalidOptionMessage(() -> lang.getString("menu.invalid-option"));
             menu.run(true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -227,9 +230,10 @@ public class ProductApp {
             context -> context.getInput().equals("en") || context.getInput().equals("vi"))).get();
 
         if (language.equals("vi")) {
-            LanguageBundleProvider.setLocale("vi", "VN");
-            return;
+            LanguageBundle.setLocale("vi", "VN");
+        } else {
+            LanguageBundle.setLocale("en", "US");
         }
-        LanguageBundleProvider.setLocale("en", "US");
+        lang = LanguageBundle.getBundle(LOCALE_PATH);
     }
 }
