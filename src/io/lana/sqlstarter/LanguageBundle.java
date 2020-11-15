@@ -3,10 +3,10 @@ package io.lana.sqlstarter;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-public class LanguageBundleProvider {
+public class LanguageBundle {
     private static Locale locale = new Locale("en", "US");
 
-    private LanguageBundleProvider() {
+    private LanguageBundle() {
     }
 
     public static ResourceBundle getBundle(String path) {
@@ -14,7 +14,7 @@ public class LanguageBundleProvider {
     }
 
     public static void setLocale(Locale locale) {
-        LanguageBundleProvider.locale = locale;
+        LanguageBundle.locale = locale;
     }
 
     public static void setLocale(String lang, String country) {

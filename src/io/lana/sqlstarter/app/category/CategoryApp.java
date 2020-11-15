@@ -1,6 +1,6 @@
 package io.lana.sqlstarter.app.category;
 
-import io.lana.sqlstarter.LanguageBundleProvider;
+import io.lana.sqlstarter.LanguageBundle;
 import io.lana.sqlstarter.dao.ConnectionUtils;
 import io.lana.sqlstarter.menu.Menu;
 import io.lana.sqlstarter.menu.command.Command;
@@ -16,7 +16,7 @@ import java.util.Scanner;
 public class CategoryApp {
     private static final String LOCALE_PATH = "io.lana.sqlstarter.app.category.locale.Menu";
 
-    private static ResourceBundle menuLang = LanguageBundleProvider.getBundle(LOCALE_PATH);
+    private static ResourceBundle menuLang = LanguageBundle.getBundle(LOCALE_PATH);
 
     private static final Scanner sc = new Scanner(System.in);
 
@@ -112,11 +112,11 @@ public class CategoryApp {
             context -> context.getInput().equals("en") || context.getInput().equals("vi"))).get();
 
         if (lang.equals("vi")) {
-            LanguageBundleProvider.setLocale("vi", "VN");
+            LanguageBundle.setLocale("vi", "VN");
         } else {
-            LanguageBundleProvider.setLocale("en", "US");
+            LanguageBundle.setLocale("en", "US");
         }
-        menuLang = LanguageBundleProvider.getBundle(LOCALE_PATH);
+        menuLang = LanguageBundle.getBundle(LOCALE_PATH);
     }
 
     private static void printAll(List<Category> categories) {
